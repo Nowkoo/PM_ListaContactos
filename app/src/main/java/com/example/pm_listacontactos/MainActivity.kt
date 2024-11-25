@@ -16,11 +16,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.pm_listacontactos.ui.theme.PM_ListaContactosTheme
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
 
 class MainActivity : ComponentActivity() {
     @SuppressLint("MutableCollectionMutableState")
@@ -46,7 +48,14 @@ class MainActivity : ComponentActivity() {
                     var hayNombre by remember { mutableStateOf(true) }
                     var hayCorreo by remember { mutableStateOf(true) }
                     var contactos by remember {mutableStateOf<MutableList<Contacto>>(mutableListOf())}
-                    var contactosActualizado by remember {mutableStateOf<MutableList<Contacto>>(mutableListOf())}
+                    val file = File(filesDir, "contactos.csv")
+
+                    if (!file.exists()) {
+                        file.createNewFile()
+                    }
+                    cargarContactos(contactos, file)
+
+                    var contactosActualizado by remember {mutableStateOf(contactos)}
 
                     Column(
                         modifier
@@ -85,6 +94,9 @@ class MainActivity : ComponentActivity() {
                                 if (hayNombre && hayCorreo) {
                                     contactosActualizado.add(Contacto(nombre, correo))
                                     contactos = contactosActualizado.toMutableList()
+                                    guardarContactos(contactos, file)
+                                    correo = ""
+                                    nombre = ""
                                 }
                             }
                         ) {
@@ -105,6 +117,7 @@ class MainActivity : ComponentActivity() {
                                         onClick = {
                                             contactosActualizado.removeAt(indice)
                                             contactos = contactosActualizado.toMutableList()
+                                            guardarContactos(contactos, file)
                                         }
                                     ) {
                                         Icon(
@@ -114,8 +127,6 @@ class MainActivity : ComponentActivity() {
                                     }
                                     HorizontalDivider()
                                 }
-
-                                contactos = contactosActualizado
                             }
                         }
                     }
@@ -123,6 +134,24 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+private fun cargarContactos(contactos: MutableList<Contacto>, file: File) {
+    val f_in = FileReader(file)
+    val lineas = f_in.readLines()
+    for (linea in lineas) {
+        val palabras = linea.split(";")
+        contactos.add(Contacto(palabras[0], palabras[1]))
+    }
+    f_in.close()
+}
+
+private fun guardarContactos(contactos: MutableList<Contacto>, file: File) {
+    val f_out = FileWriter(file)
+    for (contacto in contactos) {
+        f_out.write("${contacto.nombre};${contacto.mail}\n")
+    }
+    f_out.close()
 }
 
 data class Contacto(val nombre: String, val mail: String)
