@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,15 +48,14 @@ class MainActivity : ComponentActivity() {
                     var correo by rememberSaveable { mutableStateOf("")}
                     var hayNombre by remember { mutableStateOf(true) }
                     var hayCorreo by remember { mutableStateOf(true) }
-                    var contactos by remember {mutableStateOf<MutableList<Contacto>>(mutableListOf())}
+                    var contactos = remember { mutableStateListOf<Contacto>() } // SnapshotStateList
                     val file = File(filesDir, "contactos.csv")
 
-                    if (!file.exists()) {
+                    if (contactos.isEmpty() && file.exists()) {
+                        cargarContactos(contactos, file)
+                    } else if (!file.exists()) {
                         file.createNewFile()
                     }
-                    cargarContactos(contactos, file)
-
-                    var contactosActualizado by remember {mutableStateOf(contactos)}
 
                     Column(
                         modifier
@@ -92,8 +92,7 @@ class MainActivity : ComponentActivity() {
                                 hayCorreo = correo.isNotBlank()
 
                                 if (hayNombre && hayCorreo) {
-                                    contactosActualizado.add(Contacto(nombre, correo))
-                                    contactos = contactosActualizado.toMutableList()
+                                    contactos.add(Contacto(nombre, correo))
                                     guardarContactos(contactos, file)
                                     correo = ""
                                     nombre = ""
@@ -115,8 +114,7 @@ class MainActivity : ComponentActivity() {
                                     Text(text = contacto.mail)
                                     IconButton(
                                         onClick = {
-                                            contactosActualizado.removeAt(indice)
-                                            contactos = contactosActualizado.toMutableList()
+                                            contactos.removeAt(indice)
                                             guardarContactos(contactos, file)
                                         }
                                     ) {
